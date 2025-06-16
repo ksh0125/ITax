@@ -30,6 +30,7 @@ python vat_preprocessor.py
 ```
 
 이 단계에서:
+
 - 부가가치세법 조문을 추출하고 청킹
 - AI 모델로 벡터화
 - `vat_law_processed.pkl` 파일 생성
@@ -41,6 +42,7 @@ python main.py
 ```
 
 서버가 실행되면:
+
 - 🌐 웹 서버: http://127.0.0.1:8000
 - 📚 API 문서: http://127.0.0.1:8000/docs
 - 🔄 대화형 문서: http://127.0.0.1:8000/redoc
@@ -52,19 +54,23 @@ python main.py
 ## 🎯 주요 기능
 
 ### 1. 조문 검색
+
 - **입력**: 검색 키워드 (예: "부가가치세 세율", "사업자 정의")
 - **출력**: 관련도 높은 조문들을 유사도 순으로 정렬
 
-### 2. 관련 조문 검색  
+### 2. 관련 조문 검색
+
 - **입력**: 조문 번호 (예: "제30조", "제1조")
 - **출력**: 해당 조문과 유사한 다른 조문들
 
 ### 3. 시스템 통계
+
 - 총 청크 수, 조문 수, 임베딩 차원 등 시스템 정보
 
 ## 🔧 API 엔드포인트
 
 ### POST /search-law
+
 조문 검색
 
 ```json
@@ -74,7 +80,8 @@ python main.py
 }
 ```
 
-### POST /related-articles  
+### POST /related-articles
+
 관련 조문 검색
 
 ```json
@@ -85,24 +92,29 @@ python main.py
 ```
 
 ### GET /statistics
+
 시스템 통계 조회
 
 ### GET /health
+
 서버 상태 확인
 
 ## 🧪 테스트 방법
 
 ### 1. 벡터 검색 엔진 테스트
+
 ```bash
 python vat_vector_search.py
 ```
 
-### 2. RAG 서비스 테스트  
+### 2. RAG 서비스 테스트
+
 ```bash
 python vat_rag.py
 ```
 
 ### 3. API 테스트
+
 ```bash
 curl -X POST "http://127.0.0.1:8000/search-law" \
      -H "Content-Type: application/json" \
@@ -112,7 +124,7 @@ curl -X POST "http://127.0.0.1:8000/search-law" \
 ## 📊 샘플 검색어
 
 - **세율 관련**: "부가가치세 세율", "10퍼센트"
-- **정의 관련**: "사업자 정의", "재화", "용역"  
+- **정의 관련**: "사업자 정의", "재화", "용역"
 - **의무 관련**: "납세의무자", "신고", "납부"
 - **절차 관련**: "세금계산서", "신고기한"
 
@@ -141,6 +153,7 @@ curl -X POST "http://127.0.0.1:8000/search-law" \
 ## 🚨 문제 해결
 
 ### 서버가 시작되지 않는 경우
+
 ```bash
 # 필수 패키지 재설치
 pip install --upgrade fastapi uvicorn sentence-transformers torch
@@ -150,11 +163,13 @@ ls -la vat_law_processed.pkl
 ```
 
 ### 검색 결과가 없는 경우
+
 1. 전처리 데이터 확인: `python vat_preprocessor.py` 재실행
 2. 검색어 변경: 더 구체적이거나 다른 키워드 시도
 3. 유사도 임계값 조정: 코드에서 `similarity_threshold` 낮추기
 
 ### 웹 인터페이스 연결 안되는 경우
+
 1. 서버 실행 확인: http://127.0.0.1:8000/health 접속
 2. CORS 설정 확인: 브라우저 콘솔 에러 메시지 확인
 3. 포트 충돌: 다른 포트로 서버 실행
@@ -172,7 +187,7 @@ ls -la vat_law_processed.pkl
 문제가 발생하면 다음을 확인해보세요:
 
 1. **로그 확인**: 터미널에서 에러 메시지 확인
-2. **의존성 확인**: 필수 패키지가 설치되어 있는지 확인  
+2. **의존성 확인**: 필수 패키지가 설치되어 있는지 확인
 3. **파일 위치**: 모든 파일이 같은 폴더에 있는지 확인
 4. **권한 문제**: 파일 읽기/쓰기 권한 확인
 

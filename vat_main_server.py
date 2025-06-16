@@ -3,15 +3,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 from typing import Optional
+import traceback
 
-# vat_rag 모듈 import
+# vat_rag_service 모듈 import (정확한 파일명 사용)
 try:
-    from vat_rag import search_vat_law, get_vat_search_statistics, find_related_articles
+    from vat_rag_service import search_vat_law, get_vat_search_statistics, find_related_articles
     print("✅ 부가가치세법 RAG 모듈 로딩 성공")
-except Exception as e:
-    print(f"❌ 부가가치세법 RAG 모듈 로딩 실패: {e}")
+except Exception as import_error:
+    print(f"❌ 부가가치세법 RAG 모듈 로딩 실패: {import_error}")
+    print(f"❌ 상세 오류:\n{traceback.format_exc()}")
+    
     def search_vat_law(keyword, top_k=5):
-        return {"error": "RAG 모듈을 불러올 수 없습니다", "message": str(e)}
+        return {"error": "RAG 모듈을 불러올 수 없습니다", "message": str(import_error)}
     def get_vat_search_statistics():
         return {"error": "RAG 모듈을 불러올 수 없습니다"}
     def find_related_articles(article_number, top_k=3):
@@ -62,8 +65,10 @@ def get_statistics():
     try:
         stats = get_vat_search_statistics()
         return {"success": True, "statistics": stats}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"통계 조회 실패: {str(e)}")
+    except Exception as stats_error:
+        print(f"❌ 통계 조회 오류: {stats_error}")
+        print(f"❌ 상세 오류:\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"통계 조회 실패: {str(stats_error)}")
 
 @app.post("/search-law")
 def search_law(request: SearchRequest):
@@ -80,22 +85,26 @@ def search_law(request: SearchRequest):
         results = search_vat_law(keyword, top_k=max_results)
         
         if "error" in results:
+            print(f"❌ 검색 중 오류: {results['error']}")
+            if "message" in results:
+                print(f"❌ 오류 메시지: {results['message']}")
             raise HTTPException(status_code=500, detail=results["error"])
         
         return {
             "success": True,
             "query": keyword,
-            "results": results["results"],
-            "total_found": results["total_found"],
-            "search_method": results["search_method"],
-            "law_source": results["law_source"]
+            "results": results.get("results", []),
+            "total_found": results.get("total_found", 0),
+            "search_method": results.get("search_method", "RAG"),
+            "law_source": results.get("law_source", "부가가치세법")
         }
         
     except HTTPException:
         raise
-    except Exception as e:
-        print(f"❌ 검색 오류: {e}")
-        raise HTTPException(status_code=500, detail=f"검색 중 오류 발생: {str(e)}")
+    except Exception as search_error:
+        print(f"❌ 검색 API 오류: {search_error}")
+        print(f"❌ 상세 오류:\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"검색 중 오류 발생: {str(search_error)}")
 
 @app.post("/related-articles")
 def get_related_articles(request: RelatedArticleRequest):
@@ -112,20 +121,22 @@ def get_related_articles(request: RelatedArticleRequest):
         results = find_related_articles(article_number, top_k=max_results)
         
         if "error" in results:
+            print(f"❌ 관련 조문 검색 오류: {results['error']}")
             raise HTTPException(status_code=404, detail=results["error"])
         
         return {
             "success": True,
-            "base_article": results["base_article"],
-            "related_articles": results["related_articles"],
-            "total_found": results["total_found"]
+            "base_article": results.get("base_article"),
+            "related_articles": results.get("related_articles", []),
+            "total_found": results.get("total_found", 0)
         }
         
     except HTTPException:
         raise
-    except Exception as e:
-        print(f"❌ 관련 조문 검색 오류: {e}")
-        raise HTTPException(status_code=500, detail=f"관련 조문 검색 중 오류 발생: {str(e)}")
+    except Exception as related_error:
+        print(f"❌ 관련 조문 검색 API 오류: {related_error}")
+        print(f"❌ 상세 오류:\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"관련 조문 검색 중 오류 발생: {str(related_error)}")
 
 @app.get("/health")
 def health_check():
@@ -140,10 +151,11 @@ def health_check():
             "search_engine": "ready" if "error" not in test_result else "error",
             "timestamp": "2025-06-16"
         }
-    except Exception as e:
+    except Exception as health_error:
+        print(f"❌ 헬스체크 오류: {health_error}")
         return {
             "status": "unhealthy",
-            "error": str(e),
+            "error": str(health_error),
             "timestamp": "2025-06-16"
         }
 
